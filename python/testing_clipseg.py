@@ -15,8 +15,18 @@ image = cv2.resize(image, (512, 384), interpolation=cv2.INTER_AREA)
 H,W,C = image.shape
 
 
-texts=["pavement","car","building","pool", "crosswalk", "truck", "boat", "sidewalk", "tree", "vegetation"]
+texts=["pavement", "road"]
 inputs = processor(text=texts, images=image, return_tensors="pt", padding=True)
+
+print("Inputs: ", inputs["pixel_values"].shape)
+print("Inputs: ", inputs["input_ids"])
+print("Inputs: ", inputs["attention_mask"])
+img = inputs["pixel_values"].squeeze().detach().cpu().permute(1,2,0).numpy()
+
+cv2.imshow("img", img)
+cv2.waitKey(0)
+#plt.imshow(img)
+#plt.show()
 
 with torch.no_grad():
     start = time.perf_counter()

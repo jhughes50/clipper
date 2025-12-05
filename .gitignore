@@ -1,0 +1,41 @@
+# PyTorch model files
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+
+# Build directories (anywhere in repo)
+build/
+Build/
+BUILD/
+**/build/
+**/Build/
+**/BUILD/
+
+# CMake build artifacts
+cmake-build-*/
+out/
+dist/
+
+# Python cache
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Python environments (bonus)
+venv/
+env/
+.venv/
+*.egg-info/
+
+# C++ build artifacts (bonus)
+*.o
+*.a
+*.so
+*.dylib
+*.dll
+*.exe
+*.out
+*.pth
