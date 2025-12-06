@@ -79,3 +79,10 @@ target_link_libraries(processor_test
     GTest::Main
     ${PROJECT_NAME}
 )
+
+include(GoogleTest)
+gtest_discover_tests(merge_test)
+gtest_discover_tests(vocab_test)
+gtest_discover_tests(tokenizer_test)
+gtest_discover_tests(procerssor_mixins_test)
+gtest_discover_tests(processor_test)

@@ -11,7 +11,7 @@
 
 TEST(TokenizerTestSuite, TestVocabLoad)
 { 
-    Clipper::CLIPTokenizer tokenizer("merges.txt", "vocab.json");
+    Clipper::CLIPTokenizer tokenizer("../config/merges.txt", "../config/vocab.json");
     std::unordered_map<std::string, int> vocab = tokenizer.getVocab();
 
     ASSERT_EQ(vocab["!"], 0);
