@@ -9,7 +9,7 @@ classes for the same image you need to encode the image for each text input.
 CLIPper fixes this by encoding the image only once and then encoding each text unput,
 and decoding for text input. The image encoder is the bulk of the inference time,
 so doing this once leads to great speed ups as you add classes, as shown in plot.
-[plot](assets/plot.png)
+![plot](assets/plot.png)
 
 I do hope to commit this back to Huggingface, if they'll take it. I'm also working
 on a cpp implementation.
