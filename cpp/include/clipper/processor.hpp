@@ -2,7 +2,7 @@
 * @Author Jason Hughes 
 * @Date December 2025
 *
-* @About prepare the image for CLIPseg model
+* @About prepare the image for Clipperseg model
 */
 
 #pragma once
@@ -17,11 +17,11 @@
 namespace Clipper 
 {
 
-struct CLIPParameters
+struct ClipperParameters
 {   
-    CLIPParameters() = default;
-    CLIPParameters(const std::string& path);
-    static CLIPParameters Load(const std::string& path);
+    ClipperParameters() = default;
+    ClipperParameters(const std::string& path);
+    static ClipperParameters Load(const std::string& path);
 
     std::vector<float> mean;
     std::vector<float> std;
@@ -29,13 +29,13 @@ struct CLIPParameters
     int width;
 };
 
-struct CLIPInputs
+struct ClipperInputs
 {
-    CLIPInputs() = default;
-    CLIPInputs(at::Tensor img, std::vector<at::Tensor> tokens, std::vector<at::Tensor> masks);
+    ClipperInputs() = default;
+    ClipperInputs(at::Tensor img, std::vector<at::Tensor> tokens, std::vector<at::Tensor> masks);
 
-    static CLIPInputs InitFromText(std::vector<at::Tensor> tokens, std::vector<at::Tensor> masks);
-    static CLIPInputs InitFromImage(at::Tensor img);
+    static ClipperInputs InitFromText(std::vector<at::Tensor> tokens, std::vector<at::Tensor> masks);
+    static ClipperInputs InitFromImage(at::Tensor img);
     
     // image as a tensor
     at::Tensor image;
@@ -45,20 +45,20 @@ struct CLIPInputs
     std::vector<at::Tensor> masks;
 };
 
-class CLIPProcessor : public ProcessorMixins
+class ClipperProcessor : public ProcessorMixins
 {
     public:
-        CLIPProcessor() = default;
-        CLIPProcessor(const std::string& params_path, const std::string& merges_path, const std::string& vocab_path); 
+        ClipperProcessor() = default;
+        ClipperProcessor(const std::string& params_path, const std::string& merges_path, const std::string& vocab_path); 
 
-        CLIPInputs process(cv::Mat image, std::vector<std::string> text);
+        ClipperInputs process(cv::Mat image, std::vector<std::string> text);
 
     private:
         // downres image, normalize convert to tensor
         at::Tensor processImage(cv::Mat& img);
-        CLIPInputs processText(std::vector<std::string>& text);
+        ClipperInputs processText(std::vector<std::string>& text);
 
-        CLIPParameters params_;
-        CLIPTokenizer tokenizer_;
+        ClipperParameters params_;
+        ClipperTokenizer tokenizer_;
 };
 } // namespace Clipper

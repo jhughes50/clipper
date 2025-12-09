@@ -12,21 +12,21 @@
 
 using namespace Clipper;
 
-CLIPProcessor::CLIPProcessor(const std::string& params_path, const std::string& merges_path, const std::string& vocab_path) : ProcessorMixins()
+ClipperProcessor::ClipperProcessor(const std::string& params_path, const std::string& merges_path, const std::string& vocab_path) : ProcessorMixins()
 {
-    params_ = CLIPParameters::Load(params_path);
-    tokenizer_ = CLIPTokenizer(merges_path, vocab_path);
+    params_ = ClipperParameters::Load(params_path);
+    tokenizer_ = ClipperTokenizer(merges_path, vocab_path);
 }
 
-CLIPInputs CLIPProcessor::process(cv::Mat image, std::vector<std::string> text)
+ClipperInputs ClipperProcessor::process(cv::Mat image, std::vector<std::string> text)
 {
-    CLIPInputs inputs= processText(text);
+    ClipperInputs inputs= processText(text);
     inputs.image = processImage(image);
 
     return inputs;
 }
 
-at::Tensor CLIPProcessor::processImage(cv::Mat& img)
+at::Tensor ClipperProcessor::processImage(cv::Mat& img)
 {
     resizeImage(img, params_.height, params_.width);
     normalizeImage(img, params_.mean, params_.std);
@@ -36,7 +36,7 @@ at::Tensor CLIPProcessor::processImage(cv::Mat& img)
     return img_tensor;
 }
 
-CLIPInputs CLIPProcessor::processText(std::vector<std::string>& text)
+ClipperInputs ClipperProcessor::processText(std::vector<std::string>& text)
 {
     std::vector<at::Tensor> tokens;
     std::vector<at::Tensor> masks;
@@ -50,11 +50,11 @@ CLIPInputs CLIPProcessor::processText(std::vector<std::string>& text)
         masks.push_back(mask);
     }
 
-    CLIPInputs inputs = CLIPInputs::InitFromText(tokens, masks);
+    ClipperInputs inputs = ClipperInputs::InitFromText(tokens, masks);
     return inputs;
 }
 
-CLIPParameters::CLIPParameters(const std::string& path)
+ClipperParameters::ClipperParameters(const std::string& path)
 {
     try {
         YAML::Node config = YAML::LoadFile(path);
@@ -72,31 +72,31 @@ CLIPParameters::CLIPParameters(const std::string& path)
     }  
 }
 
-CLIPParameters CLIPParameters::Load(const std::string& path)
+ClipperParameters ClipperParameters::Load(const std::string& path)
 {
-    CLIPParameters params(path);
+    ClipperParameters params(path);
     return params;
 }
 
-CLIPInputs::CLIPInputs(at::Tensor img, std::vector<at::Tensor> tkns, std::vector<at::Tensor> msks)
+ClipperInputs::ClipperInputs(at::Tensor img, std::vector<at::Tensor> tkns, std::vector<at::Tensor> msks)
 {
     image = img;
     tokens = tkns;
     masks = msks;
 }
 
-CLIPInputs CLIPInputs::InitFromText(std::vector<at::Tensor> tkns, std::vector<at::Tensor> msks)
+ClipperInputs ClipperInputs::InitFromText(std::vector<at::Tensor> tkns, std::vector<at::Tensor> msks)
 {
-    CLIPInputs inputs;
+    ClipperInputs inputs;
     inputs.tokens = tkns;
     inputs.masks = msks;
 
     return inputs;
 }
 
-CLIPInputs CLIPInputs::InitFromImage(at::Tensor img)
+ClipperInputs ClipperInputs::InitFromImage(at::Tensor img)
 {
-    CLIPInputs inputs;
+    ClipperInputs inputs;
     inputs.image = img;
 
     return inputs;
