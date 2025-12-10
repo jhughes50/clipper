@@ -164,3 +164,8 @@ std::vector<int> CLIPTokenizer::tokenize(const std::string& text)
 
     return token_ids;
 }
+
+int CLIPTokenizer::getPaddingToken() const
+{
+    return 49407;
+}

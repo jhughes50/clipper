@@ -32,6 +32,8 @@ class CLIPTokenizer
         std::vector<std::pair<std::string, std::string>> getMerges() const;
         std::unordered_map<std::string, int> getVocab() const;
 
+        int getPaddingToken() const;
+
     private:
         std::vector<std::pair<std::string, std::string>> loadMerges(const std::string& path);
         std::unordered_map<std::string, int> loadVocab(const std::string& path);

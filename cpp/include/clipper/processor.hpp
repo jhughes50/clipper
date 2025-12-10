@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <cassert>
 #include <yaml-cpp/yaml.h>
 #include <torch/script.h>
 #include <opencv2/opencv.hpp>
@@ -27,15 +28,16 @@ struct ClipperParameters
     std::vector<float> std;
     int height;
     int width;
+    int padding;
 };
 
-struct ClipperInputs
+struct ClipperModelInputs
 {
-    ClipperInputs() = default;
-    ClipperInputs(at::Tensor img, std::vector<at::Tensor> tokens, std::vector<at::Tensor> masks);
+    ClipperModelInputs() = default;
+    ClipperModelInputs(at::Tensor img, std::vector<at::Tensor> tokens, std::vector<at::Tensor> masks);
 
-    static ClipperInputs InitFromText(std::vector<at::Tensor> tokens, std::vector<at::Tensor> masks);
-    static ClipperInputs InitFromImage(at::Tensor img);
+    static ClipperModelInputs InitFromText(std::vector<at::Tensor> tokens, std::vector<at::Tensor> masks);
+    static ClipperModelInputs InitFromImage(at::Tensor img);
     
     // image as a tensor
     at::Tensor image;
@@ -43,6 +45,8 @@ struct ClipperInputs
     std::vector<at::Tensor> tokens;
     // attentions mask
     std::vector<at::Tensor> masks;
+
+    size_t getSize() const;
 };
 
 class ClipperProcessor : public ProcessorMixins
@@ -51,14 +55,14 @@ class ClipperProcessor : public ProcessorMixins
         ClipperProcessor() = default;
         ClipperProcessor(const std::string& params_path, const std::string& merges_path, const std::string& vocab_path); 
 
-        ClipperInputs process(cv::Mat image, std::vector<std::string> text);
+        ClipperModelInputs process(cv::Mat image, std::vector<std::string> text);
 
     private:
         // downres image, normalize convert to tensor
         at::Tensor processImage(cv::Mat& img);
-        ClipperInputs processText(std::vector<std::string>& text);
+        ClipperModelInputs processText(std::vector<std::string>& text);
 
         ClipperParameters params_;
-        ClipperTokenizer tokenizer_;
+        CLIPTokenizer tokenizer_;
 };
 } // namespace Clipper

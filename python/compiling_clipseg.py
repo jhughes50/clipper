@@ -33,7 +33,11 @@ img_output = model.vision_model(pixel_values=inputs["pixel_values"],
                             output_hidden_states=True, 
                             interpolate_pos_encoding=True,
                             return_dict=False)
-
+for i, e in enumerate(img_output):
+    print(type(e))
+    #print("Entry ", i, " ", e.shape)
+print(len(img_output[2]))
+print(img_output[2][4].shape)
 text_output = model.text_model(input_ids=inputs["input_ids"], 
                                attention_mask=inputs["attention_mask"], 
                                return_dict=False)
@@ -47,8 +51,8 @@ text_output = model.text_model(input_ids=inputs["input_ids"],
 #output = model.text_model(inputs["input_ids"], inputs["attention_mask"])
 #print(output[0].shape, output[1].shape)
 
-traced_model = torch.jit.trace(model.text_model, (inputs["input_ids"], inputs["attention_mask"]))
-torch.jit.save(traced_model, "clip-text-model-traced.pt")
+#traced_model = torch.jit.trace(model.text_model, (inputs["input_ids"], inputs["attention_mask"]))
+#torch.jit.save(traced_model, "clip-text-model-traced.pt")
 
 #traced_model = torch.jit.trace(model.text_projection,  output[1])
 #torch.jit.save(traced_model, "clip-text-projection-traced.pt")
@@ -61,8 +65,8 @@ activations = [img_output[2][i + 1] for i in decoder.extract_layers]
 print(decoder.extract_layers)
 print(img_projected.shape)
 
-traced_model = torch.jit.trace(decoder.decoder, (activations, txt_projected))
-torch.jit.save(traced_model, "clip-decoder-traced.pt")
+#traced_model = torch.jit.trace(decoder.decoder, (activations, txt_projected))
+#torch.jit.save(traced_model, "clip-decoder-traced.pt")
 output = decoder.decoder(activations, txt_projected, return_dict=False)
 print(output[0].shape)
 
