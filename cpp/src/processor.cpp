@@ -18,6 +18,21 @@ ClipperProcessor::ClipperProcessor(const std::string& params_path, const std::st
     tokenizer_ = CLIPTokenizer(merges_path, vocab_path);
 }
 
+cv::Mat ClipperProcessor::postProcess(at::Tensor& logits)
+{
+    logits = logits.to(torch::kCPU).to(torch::kFloat32).contiguous();
+    at::Tensor min = torch::min(logits);
+    at::Tensor max = torch::max(logits);
+    
+    at::Tensor tensor = (logits - min) / (max - min);
+
+    int rows = tensor.size(0);
+    int cols = tensor.size(1);
+
+    cv::Mat heatmap(rows, cols, CV_32FC1, tensor.data_ptr<float>());
+    return heatmap.clone();
+}
+
 ClipperModelInputs ClipperProcessor::process(cv::Mat image, std::vector<std::string> text)
 {
     ClipperModelInputs inputs= processText(text);
@@ -54,10 +69,11 @@ ClipperModelInputs ClipperProcessor::processText(std::vector<std::string>& text)
             attn_mask.push_back(0);
         }
         at::Tensor token_tensor = torch::tensor(token_ids);
-        tokens.push_back(token_tensor);
-        
+        tokens.push_back(token_tensor.unsqueeze_(0));
+        //std::cout << token_tensor.sizes() << std::endl; 
         at::Tensor mask = torch::tensor(attn_mask);
-        masks.push_back(mask);
+        //std::cout << mask.sizes() << std::endl;
+        masks.push_back(mask.unsqueeze_(0));
     }
 
     ClipperModelInputs inputs = ClipperModelInputs::InitFromText(tokens, masks);

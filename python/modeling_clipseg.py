@@ -1300,7 +1300,7 @@ class CLIPSegForImageSegmentation(CLIPSegPreTrainedModel):
 
         # step 2: compute conditional embeddings, either from text, images or an own provided embedding
         outputs = list()
-        print(input_ids.shape)
+        print("input ids:", input_ids.shape)
         print(pixel_values.shape)
         print(attention_mask.shape)
         print("cond: ", conditional_embeddings)

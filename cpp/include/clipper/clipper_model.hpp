@@ -15,6 +15,13 @@
 namespace Clipper
 {
 
+enum ClipperModelType
+{
+    IMGENCODER,
+    TXTENCODER,
+    DECODER
+};
+
 struct ClipperModelOutput
 {
     std::vector<at::Tensor> logits;
@@ -31,8 +38,13 @@ class ClipperModelBase
 {
     public:
         ClipperModelBase() = default;
-        ClipperModelBase(const std::string& model_path, const std::string& proj_path);
-        ClipperModelBase(const std::string& model_path);
+        ClipperModelBase(const std::string& model_path, 
+                         const std::string& proj_path,
+                         ClipperModelType type);
+        ClipperModelBase(const std::string& model_path,
+                         ClipperModelType type);
+
+        c10::Device getDevice() const;
 
     protected:
         torch::jit::script::Module model_;

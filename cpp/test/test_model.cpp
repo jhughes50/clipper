@@ -22,5 +22,10 @@ int main()
 
     Clipper::ClipperModelOutput output = model(inputs);
 
+    cv::Mat heatmap = processor.postProcess(output.logits[0]);
+
+    cv::imshow("heatmap", heatmap);
+    cv::waitKey(0);
+
     return 0;
 }

@@ -20,27 +20,25 @@ processor = CLIPSegProcessor.from_pretrained("CIDAS/clipseg-rd64-refined")
 from modeling_clipseg import CLIPSegVisionTransformer, CLIPSegModel, CLIPSegDecoder, CLIPSegForImageSegmentation
 
 
-model = CLIPSegModel.from_pretrained("CIDAS/clipseg-rd64-refined")
-
+model = CLIPSegModel.from_pretrained("CIDAS/clipseg-rd64-refined").to('cuda')
+#print(model.vision_model.to('cuda'))
 image = np.array(Image.open("test4.png"))[:,:,:-1]
 image = cv2.resize(image, (512, 384), interpolation=cv2.INTER_AREA)
 H,W,C = image.shape
 
-inputs = processor(text=["road"], images=image, return_tensors="pt",padding="max_length",max_length=10)
+inputs = processor(text=["road"], images=image, return_tensors="pt", padding="max_length",max_length=10)
 
-img_output = model.vision_model(pixel_values=inputs["pixel_values"], 
+img_output = model.vision_model(pixel_values=inputs["pixel_values"].to('cuda'), 
                             output_attentions=False, 
                             output_hidden_states=True, 
                             interpolate_pos_encoding=True,
                             return_dict=False)
-for i, e in enumerate(img_output):
-    print(type(e))
-    #print("Entry ", i, " ", e.shape)
-print(len(img_output[2]))
-print(img_output[2][4].shape)
-text_output = model.text_model(input_ids=inputs["input_ids"], 
-                               attention_mask=inputs["attention_mask"], 
+
+text_output = model.text_model(input_ids=inputs["input_ids"].to('cuda'), 
+                               attention_mask=inputs["attention_mask"].to('cuda'), 
                                return_dict=False)
+
+
 
 #traced_model = torch.jit.trace(model.vision_model, inputs["pixel_values"])
 #torch.jit.save(traced_model, "clip-vision-model-traced.pt")
@@ -48,23 +46,24 @@ text_output = model.text_model(input_ids=inputs["input_ids"],
 #traced_model = torch.jit.trace(model.visual_projection, output[1])
 #torch.jit.save(traced_model, "clip-vision-projection-traced.pt")
 
-#output = model.text_model(inputs["input_ids"], inputs["attention_mask"])
-#print(output[0].shape, output[1].shape)
-
-#traced_model = torch.jit.trace(model.text_model, (inputs["input_ids"], inputs["attention_mask"]))
+#traced_model = torch.jit.trace(model.text_model, (inputs["input_ids"].to('cuda'), inputs["attention_mask"].to('cuda')))
 #torch.jit.save(traced_model, "clip-text-model-traced.pt")
 
+#output = model.text_model(inputs["input_ids"].to('cuda'), inputs["attention_mask"].to('cuda'))
+#
 #traced_model = torch.jit.trace(model.text_projection,  output[1])
 #torch.jit.save(traced_model, "clip-text-projection-traced.pt")
 
-decoder = CLIPSegForImageSegmentation.from_pretrained("CIDAS/clipseg-rd64-refined")
+decoder = CLIPSegForImageSegmentation.from_pretrained("CIDAS/clipseg-rd64-refined").to('cuda')
 img_projected = model.visual_projection(img_output[1])
 txt_projected = model.text_projection(text_output[1])
 activations = [img_output[2][i + 1] for i in decoder.extract_layers]
 
 print(decoder.extract_layers)
 print(img_projected.shape)
-
+print(type(txt_projected))
+print(type(activations))
+print(type(activations[1]))
 #traced_model = torch.jit.trace(decoder.decoder, (activations, txt_projected))
 #torch.jit.save(traced_model, "clip-decoder-traced.pt")
 output = decoder.decoder(activations, txt_projected, return_dict=False)

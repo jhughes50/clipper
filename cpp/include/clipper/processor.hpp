@@ -56,6 +56,7 @@ class ClipperProcessor : public ProcessorMixins
         ClipperProcessor(const std::string& params_path, const std::string& merges_path, const std::string& vocab_path); 
 
         ClipperModelInputs process(cv::Mat image, std::vector<std::string> text);
+        cv::Mat postProcess(at::Tensor& logots);
 
     private:
         // downres image, normalize convert to tensor
