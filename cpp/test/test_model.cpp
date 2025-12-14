@@ -19,6 +19,7 @@ int main()
     std::vector<std::string> texts = {"road"};
 
     Clipper::ClipperModelInputs inputs = processor.process(img, texts);
+    //model.setText(inputs.tokens, inputs.masks);
 
     Clipper::ClipperModelOutput output = model(inputs);
 

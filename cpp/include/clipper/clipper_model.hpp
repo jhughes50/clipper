@@ -67,6 +67,15 @@ class ClipperTextModel : public ClipperModelBase
     public: 
         using ClipperModelBase::ClipperModelBase;
         at::Tensor operator()(at::Tensor& tokens, at::Tensor& masks);
+        
+        void setText(std::vector<at::Tensor>& tokens, std::vector<at::Tensor>& masks);
+
+        bool isTextSet() const;
+        at::Tensor getTextEmbedding(const size_t idx) const;    
+
+    private:
+        std::vector<at::Tensor> text_embeddings_;
+        bool text_set_{false};
 };
 
 class ClipperDecoderModel : public ClipperModelBase
@@ -84,12 +93,15 @@ class ClipperModel
         
         ClipperModelOutput operator()(ClipperModelInputs inputs);
 
+        void setText(std::vector<at::Tensor>& tokens, std::vector<at::Tensor>& masks);
         // TODO give direct access to forward pass 
 
     private:
         ClipperImageModel image_encoder_;
         ClipperTextModel text_encoder_;
         ClipperDecoderModel decoder_;
+        
+        std::unique_ptr<c10::Device> device_;
 };
 
 

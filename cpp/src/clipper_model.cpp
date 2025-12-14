@@ -83,6 +83,29 @@ at::Tensor ClipperTextModel::operator()(at::Tensor& tokens, at::Tensor& masks)
     return final_embedding;
 }
 
+void ClipperTextModel::setText(std::vector<at::Tensor>& tokens, std::vector<at::Tensor>& masks)
+{
+    size_t input_size = tokens.size();
+    text_embeddings_.clear();
+
+    for (size_t i = 0; i < input_size; ++i) {
+        at::Tensor text_embedding = this->operator()(tokens[i], masks[i]);
+        text_embeddings_.push_back(text_embedding.detach().cpu().clone());
+    }
+    
+    text_set_ = true;
+}
+
+bool ClipperTextModel::isTextSet() const
+{
+    return text_set_;
+}
+
+at::Tensor ClipperTextModel::getTextEmbedding(const size_t idx) const
+{
+    return text_embeddings_[idx];
+}
+
 at::Tensor ClipperDecoderModel::operator()(std::vector<at::Tensor>& img_embeddings, at::Tensor& text_embedding)
 {
     c10::List<at::Tensor> activations(img_embeddings);
@@ -104,17 +127,21 @@ ClipperModel::ClipperModel(const std::string& model_dir)
                                      ClipperModelType::TXTENCODER);
 
     decoder_ = ClipperDecoderModel(model_dir+"/clip-decoder-traced.pt", ClipperModelType::DECODER);
+    
+    if (torch::cuda::is_available()) {
+        device_ = std::make_unique<c10::Device>(at::kCUDA);
+        std::cout << "Using device: Cuda" << std::endl;
+    }
+    else {
+        device_ = std::make_unique<c10::Device>(at::kCPU);
+        std::cout << "Using deviceL CPU" << std::endl;
+    }
 }
 
-//void ClipperModel::setText(std::vector<at::Tensor>& tokens, std::vector<at::Tensor>& masks)
-//{
-//    size_t input_size = tokens.size();
-//
-//    for (size_t i = 0; i < input_size; ++i) {
-//        at::Tensor text_embedding = text_encoder_(tokens[i], masks[i]);
-//    }
-//    // todo: save text embeddings
-//}
+void ClipperModel::setText(std::vector<at::Tensor>& tokens, std::vector<at::Tensor>& masks)
+{
+    text_encoder_.setText(tokens, masks);
+}
 
 ClipperModelOutput ClipperModel::operator()(ClipperModelInputs inputs)
 {
@@ -124,8 +151,16 @@ ClipperModelOutput ClipperModel::operator()(ClipperModelInputs inputs)
     std::vector<at::Tensor> logits;
 
     for (size_t i = 0; i < input_size; ++i) {
-        at::Tensor text_embedding = text_encoder_(inputs.tokens[i], inputs.masks[i]);
-        at::Tensor raw_logits = decoder_(image_output.activations, text_embedding);
+        at::Tensor raw_logits;
+        if (!text_encoder_.isTextSet()) {
+            at::Tensor text_embedding = text_encoder_(inputs.tokens[i], inputs.masks[i]);
+            raw_logits = decoder_(image_output.activations, text_embedding);
+        }
+        else {
+            at::Tensor text_embedding = text_encoder_.getTextEmbedding(i);
+            at::Tensor text_embedding_cuda = text_embedding.to(*device_);
+            raw_logits = decoder_(image_output.activations, text_embedding_cuda);
+        }
         logits.push_back(raw_logits.squeeze_(0));
     }
     std::cout << "logits size: " << logits[0].sizes() << std::endl; 
