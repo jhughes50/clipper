@@ -1,0 +1,16 @@
+@PACKAGE_INIT@
+
+# Find dependencies
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(JSONCPP REQUIRED jsoncpp)
+
+set(TORCH_ROOT "/opt/libtorch" CACHE PATH "Path to LibTorch installation")
+set(Torch_DIR "${TORCH_ROOT}/share/cmake/Torch")
+find_package(Torch REQUIRED PATHS "${TORCH_ROOT}")
+find_package(OpenCV REQUIRED)
+find_package(yaml-cpp REQUIRED)
+
+# Include the targets file
+include("${CMAKE_CURRENT_LIST_DIR}/ClipperTargets.cmake")
+
+check_required_components(Clipper)
