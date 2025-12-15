@@ -10,3 +10,5 @@ processor:
   size:
     height: 352
     width: 352
+  text:
+    padding: 10

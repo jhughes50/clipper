@@ -28,6 +28,7 @@ add_library(${PROJECT_NAME}
     src/tokenizer.cpp
     src/processor_mixins.cpp
     src/processor.cpp
+    src/clipper_model.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} PUBLIC
@@ -80,9 +81,14 @@ target_link_libraries(processor_test
     ${PROJECT_NAME}
 )
 
+add_executable(model_test test/test_model.cpp)
+target_link_libraries(model_test
+    ${PROJECT_NAME}
+)
+
 include(GoogleTest)
 gtest_discover_tests(merge_test)
 gtest_discover_tests(vocab_test)
 gtest_discover_tests(tokenizer_test)
-gtest_discover_tests(procerssor_mixins_test)
+gtest_discover_tests(processor_mixins_test)
 gtest_discover_tests(processor_test)

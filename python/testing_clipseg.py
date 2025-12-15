@@ -23,8 +23,8 @@ print("Inputs: ", inputs["input_ids"])
 print("Inputs: ", inputs["attention_mask"])
 img = inputs["pixel_values"].squeeze().detach().cpu().permute(1,2,0).numpy()
 
-cv2.imshow("img", img)
-cv2.waitKey(0)
+#cv2.imshow("img", img)
+#cv2.waitKey(0)
 #plt.imshow(img)
 #plt.show()
 

@@ -19,7 +19,7 @@ TEST(ProcessorTestSuite, TestProcessing)
     std::string vocab_path = path + "vocab.json";
     std::string params_path = path + "clipper.yaml";
 
-    Clipper::CLIPProcessor processor(params_path, merges_path, vocab_path);
+    Clipper::ClipperProcessor processor(params_path, merges_path, vocab_path);
 
-    Clipper::CLIPInputs inputs = processor.process(img, texts);
+    Clipper::ClipperModelInputs inputs = processor.process(img, texts);
 }

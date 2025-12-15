@@ -574,7 +574,7 @@ class CLIPSegTextTransformer(nn.Module):
         position_ids: Optional[torch.Tensor] = None,
         output_attentions: Optional[bool] = None,
         output_hidden_states: Optional[bool] = None,
-        return_dict: Optional[bool] = None,
+        return_dict: Optional[bool] = False,
     ) -> Union[tuple, BaseModelOutputWithPooling]:
         output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
         output_hidden_states = (
@@ -1118,7 +1118,7 @@ class CLIPSegDecoder(CLIPSegPreTrainedModel):
         conditional_embeddings: torch.Tensor,
         output_attentions: Optional[bool] = None,
         output_hidden_states: Optional[bool] = None,
-        return_dict: Optional[bool] = True,
+        return_dict: Optional[bool] = False,
     ):
         all_hidden_states = () if output_hidden_states else None
         all_attentions = () if output_attentions else None
@@ -1300,9 +1300,10 @@ class CLIPSegForImageSegmentation(CLIPSegPreTrainedModel):
 
         # step 2: compute conditional embeddings, either from text, images or an own provided embedding
         outputs = list()
-        print(input_ids.shape)
+        print("input ids:", input_ids.shape)
         print(pixel_values.shape)
         print(attention_mask.shape)
+        print("cond: ", conditional_embeddings)
         for idx in range(input_ids.size(0)):
             if conditional_embeddings is None:
                 conditional_embeddings = self.get_conditional_embeddings(

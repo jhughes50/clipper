@@ -13,3 +13,8 @@ so doing this once leads to great speed ups as you add classes, as shown in plot
 
 I do hope to commit this back to Huggingface, if they'll take it. I'm also working
 on a cpp implementation.
+
+# ToDos
+1. Add pooling to cpp text processor
+2. Write the model in cpp
+3. Test model

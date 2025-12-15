@@ -12,21 +12,36 @@
 
 using namespace Clipper;
 
-CLIPProcessor::CLIPProcessor(const std::string& params_path, const std::string& merges_path, const std::string& vocab_path) : ProcessorMixins()
+ClipperProcessor::ClipperProcessor(const std::string& params_path, const std::string& merges_path, const std::string& vocab_path) : ProcessorMixins()
 {
-    params_ = CLIPParameters::Load(params_path);
+    params_ = ClipperParameters::Load(params_path);
     tokenizer_ = CLIPTokenizer(merges_path, vocab_path);
 }
 
-CLIPInputs CLIPProcessor::process(cv::Mat image, std::vector<std::string> text)
+cv::Mat ClipperProcessor::postProcess(at::Tensor& logits)
 {
-    CLIPInputs inputs= processText(text);
+    logits = logits.to(torch::kCPU).to(torch::kFloat32).contiguous();
+    at::Tensor min = torch::min(logits);
+    at::Tensor max = torch::max(logits);
+    
+    at::Tensor tensor = (logits - min) / (max - min);
+
+    int rows = tensor.size(0);
+    int cols = tensor.size(1);
+
+    cv::Mat heatmap(rows, cols, CV_32FC1, tensor.data_ptr<float>());
+    return heatmap.clone();
+}
+
+ClipperModelInputs ClipperProcessor::process(cv::Mat image, std::vector<std::string> text)
+{
+    ClipperModelInputs inputs= processText(text);
     inputs.image = processImage(image);
 
     return inputs;
 }
 
-at::Tensor CLIPProcessor::processImage(cv::Mat& img)
+at::Tensor ClipperProcessor::processImage(cv::Mat& img)
 {
     resizeImage(img, params_.height, params_.width);
     normalizeImage(img, params_.mean, params_.std);
@@ -36,25 +51,36 @@ at::Tensor CLIPProcessor::processImage(cv::Mat& img)
     return img_tensor;
 }
 
-CLIPInputs CLIPProcessor::processText(std::vector<std::string>& text)
+ClipperModelInputs ClipperProcessor::processText(std::vector<std::string>& text)
 {
     std::vector<at::Tensor> tokens;
     std::vector<at::Tensor> masks;
    
     for (const std::string& t : text) {
         std::vector<int> token_ids = tokenizer_.tokenize(t);
+        std::vector<int> attn_mask(token_ids.size(), 1);
+
+        if (token_ids.size() > params_.padding) {
+            throw std::runtime_error("Your text input is too long. If you want long inputs adjust the max_length parameter in the python processor used in the compiling script and then adjust the padding parameter in clipper.yaml. You could also tell Jason to write better code, but he probably wont listen.");
+        }
+
+        while (token_ids.size() < params_.padding) {
+            token_ids.push_back(tokenizer_.getPaddingToken());
+            attn_mask.push_back(0);
+        }
         at::Tensor token_tensor = torch::tensor(token_ids);
-        tokens.push_back(token_tensor);
-        
-        at::Tensor mask = torch::ones({token_ids.size()});
-        masks.push_back(mask);
+        tokens.push_back(token_tensor.unsqueeze_(0));
+        //std::cout << token_tensor.sizes() << std::endl; 
+        at::Tensor mask = torch::tensor(attn_mask);
+        //std::cout << mask.sizes() << std::endl;
+        masks.push_back(mask.unsqueeze_(0));
     }
 
-    CLIPInputs inputs = CLIPInputs::InitFromText(tokens, masks);
+    ClipperModelInputs inputs = ClipperModelInputs::InitFromText(tokens, masks);
     return inputs;
 }
 
-CLIPParameters::CLIPParameters(const std::string& path)
+ClipperParameters::ClipperParameters(const std::string& path)
 {
     try {
         YAML::Node config = YAML::LoadFile(path);
@@ -64,7 +90,8 @@ CLIPParameters::CLIPParameters(const std::string& path)
 
         height = config["processor"]["size"]["height"].as<int>();
         width = config["processor"]["size"]["width"].as<int>();
-
+        
+        padding = config["processor"]["text"]["padding"].as<int>();
     } catch (const YAML::Exception& e) {
         throw std::runtime_error("Error loading YAML File at : " + path + " : " + std::string(e.what()));
     } catch (const std::exception& e) {
@@ -72,32 +99,38 @@ CLIPParameters::CLIPParameters(const std::string& path)
     }  
 }
 
-CLIPParameters CLIPParameters::Load(const std::string& path)
+ClipperParameters ClipperParameters::Load(const std::string& path)
 {
-    CLIPParameters params(path);
+    ClipperParameters params(path);
     return params;
 }
 
-CLIPInputs::CLIPInputs(at::Tensor img, std::vector<at::Tensor> tkns, std::vector<at::Tensor> msks)
+ClipperModelInputs::ClipperModelInputs(at::Tensor img, std::vector<at::Tensor> tkns, std::vector<at::Tensor> msks)
 {
     image = img;
     tokens = tkns;
     masks = msks;
 }
 
-CLIPInputs CLIPInputs::InitFromText(std::vector<at::Tensor> tkns, std::vector<at::Tensor> msks)
+ClipperModelInputs ClipperModelInputs::InitFromText(std::vector<at::Tensor> tkns, std::vector<at::Tensor> msks)
 {
-    CLIPInputs inputs;
+    ClipperModelInputs inputs;
     inputs.tokens = tkns;
     inputs.masks = msks;
 
     return inputs;
 }
 
-CLIPInputs CLIPInputs::InitFromImage(at::Tensor img)
+ClipperModelInputs ClipperModelInputs::InitFromImage(at::Tensor img)
 {
-    CLIPInputs inputs;
+    ClipperModelInputs inputs;
     inputs.image = img;
 
     return inputs;
+}
+
+size_t ClipperModelInputs::getSize() const
+{
+    assert(tokens.size() == masks.size() && "Tokens and Mask sizes do not match");
+    return tokens.size();
 }
