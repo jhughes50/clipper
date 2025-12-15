@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(clipper)
+project(clipper VERSION 1.0.0)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -38,6 +38,13 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
     yaml-cpp
 )
 
+# Set include directories for the library target
+target_include_directories(${PROJECT_NAME} PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
+
+# Tests
 enable_testing()
 add_executable(merge_test test/test_merge.cpp)
 target_link_libraries(merge_test
@@ -92,3 +99,49 @@ gtest_discover_tests(vocab_test)
 gtest_discover_tests(tokenizer_test)
 gtest_discover_tests(processor_mixins_test)
 gtest_discover_tests(processor_test)
+
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
+
+# Install the library
+install(TARGETS ${PROJECT_NAME}
+    EXPORT ClipperTargets
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
+
+# Install header files
+install(DIRECTORY include/
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
+)
+
+# Install the export set
+install(EXPORT ClipperTargets
+    FILE ClipperTargets.cmake
+    NAMESPACE Clipper::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Clipper
+)
+
+# Create config file
+configure_package_config_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/ClipperConfig.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/ClipperConfig.cmake
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Clipper
+)
+
+# Create version file
+write_basic_package_version_file(
+    ${CMAKE_CURRENT_BINARY_DIR}/ClipperConfigVersion.cmake
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY SameMajorVersion
+)
+
+# Install config files
+install(FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/ClipperConfig.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/ClipperConfigVersion.cmake
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Clipper
+)
