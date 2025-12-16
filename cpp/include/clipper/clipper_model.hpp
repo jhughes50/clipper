@@ -9,6 +9,7 @@
 #include <string>
 #include <torch/script.h>
 #include <torch/torch.h>
+#include <glog/logging.h>
 
 #include "clipper/processor.hpp"
 
@@ -91,10 +92,13 @@ class ClipperModel
         ClipperModel() = default;
         ClipperModel(const std::string& model_dir);
         
+        // inference all at once
         ClipperModelOutput operator()(ClipperModelInputs inputs);
 
+        // for more control over inference
         void setText(std::vector<at::Tensor>& tokens, std::vector<at::Tensor>& masks);
-        // TODO give direct access to forward pass 
+        ClipperImageModelOutput setImage(at::Tensor& image);
+        at::Tensor inference(std::vector<at::Tensor>& activations, at::Tensor& token, at::Tensor& mask);
 
     private:
         ClipperImageModel image_encoder_;

@@ -11,13 +11,15 @@ using namespace Clipper;
 
 ClipperModelBase::ClipperModelBase(const std::string& model_path, const std::string& proj_path, ClipperModelType type)
 {
+
+
     if (torch::cuda::is_available()) {
         device_ = std::make_unique<c10::Device>(at::kCUDA);
-        std::cout << "Using device: Cuda" << std::endl;
+        LOG(INFO) << "Using device Cuda";
     }
     else {
         device_ = std::make_unique<c10::Device>(at::kCPU);
-        std::cout << "Using deviceL CPU" << std::endl;
+        LOG(INFO) << "Using deviceL CPU";
     }
     model_ = torch::jit::load(model_path);
     model_.to(*device_);
@@ -31,7 +33,7 @@ ClipperModelBase::ClipperModelBase(const std::string& model_path, ClipperModelTy
 {
     if (torch::cuda::is_available()) {
         device_ = std::make_unique<c10::Device>(at::kCUDA);
-        std::cout << "Using device: Cuda" << std::endl;
+        LOG(INFO) << "Using device Cuda";
     }
 
     model_ = torch::jit::load(model_path, *device_);
@@ -119,6 +121,9 @@ at::Tensor ClipperDecoderModel::operator()(std::vector<at::Tensor>& img_embeddin
 
 ClipperModel::ClipperModel(const std::string& model_dir)
 {
+    google::InitGoogleLogging("Clipper");
+    FLAGS_alsologtostderr = 1;
+    
     image_encoder_ = ClipperImageModel(model_dir+"/clip-vision-model-traced.pt", 
                                        model_dir+"/clip-vision-projection-traced.pt",
                                        ClipperModelType::IMGENCODER);
@@ -130,11 +135,11 @@ ClipperModel::ClipperModel(const std::string& model_dir)
     
     if (torch::cuda::is_available()) {
         device_ = std::make_unique<c10::Device>(at::kCUDA);
-        std::cout << "Using device: Cuda" << std::endl;
+        LOG(INFO) << "Using device Cuda";
     }
     else {
         device_ = std::make_unique<c10::Device>(at::kCPU);
-        std::cout << "Using deviceL CPU" << std::endl;
+        LOG(INFO) << "Using device CPU";
     }
 }
 
@@ -142,6 +147,20 @@ void ClipperModel::setText(std::vector<at::Tensor>& tokens, std::vector<at::Tens
 {
     text_encoder_.setText(tokens, masks);
 }
+
+ClipperImageModelOutput ClipperModel::setImage(at::Tensor& image)
+{
+    ClipperImageModelOutput image_output = image_encoder_(image);
+    return image_output;
+}
+
+at::Tensor ClipperModel::inference(std::vector<at::Tensor>& activations, at::Tensor& token, at::Tensor& mask)
+{
+    at::Tensor text_embedding = text_encoder_(token, mask);
+    at::Tensor raw_logits = decoder_(activations, text_embedding);
+
+    return raw_logits.squeeze_(0);
+}   
 
 ClipperModelOutput ClipperModel::operator()(ClipperModelInputs inputs)
 {
@@ -163,7 +182,6 @@ ClipperModelOutput ClipperModel::operator()(ClipperModelInputs inputs)
         }
         logits.push_back(raw_logits.squeeze_(0));
     }
-    std::cout << "logits size: " << logits[0].sizes() << std::endl; 
     ClipperModelOutput output{logits, image_output.activations};
     
     return output;

@@ -14,6 +14,7 @@ find_package(Torch REQUIRED PATHS "${TORCH_ROOT}")
 find_package(OpenCV REQUIRED)
 find_package(GTest REQUIRED)
 find_package(yaml-cpp REQUIRED)
+find_package(glog REQUIRED)
 
 include_directories(
     include
@@ -35,6 +36,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
     ${TORCH_LIBRARIES}
     ${OpenCV_LIBRARIES}
     ${JSONCPP_LIBRARIES}
+    glog::glog
     yaml-cpp
 )
 
@@ -90,6 +92,11 @@ target_link_libraries(processor_test
 
 add_executable(model_test test/test_model.cpp)
 target_link_libraries(model_test
+    ${PROJECT_NAME}
+)
+
+add_executable(model_inference_test test/test_model_inference.cpp)
+target_link_libraries(model_inference_test
     ${PROJECT_NAME}
 )
 
