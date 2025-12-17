@@ -45,13 +45,6 @@ at::Tensor ProcessorMixins::cvToTensor(const cv::Mat& mat) const noexcept
 
 cv::Mat ProcessorMixins::tensorToCv(at::Tensor& tensor) const noexcept
 {
-    tensor = tensor.to(torch::kCPU).to(torch::kFloat32).contiguous();
-
-    at::Tensor min = torch::min(tensor);
-    at::Tensor max = torch::max(tensor);
-    
-    tensor = (tensor - min) / (max - min);
-
     int rows = tensor.size(0);
     int cols = tensor.size(1);
 
