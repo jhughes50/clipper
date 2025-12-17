@@ -21,20 +21,34 @@ ClipperProcessor::ClipperProcessor(const std::string& params_path, const std::st
 cv::Mat ClipperProcessor::postProcess(at::Tensor& logits)
 {
     logits = logits.to(torch::kCPU).to(torch::kFloat32).contiguous();
-    at::Tensor min = torch::min(logits);
-    at::Tensor max = torch::max(logits);
+    cv::Mat heatmap = tensorToCv(logits);
+    if (!preprocessed_) {
+        LOG(INFO) << "process not called yet, unable to resize to original size";
+        return heatmap;
+    } else {
+        cv::resize(heatmap, heatmap, size_);
+    }
+    return heatmap;
+}
+
+void ClipperProcessor::normalize(at::Tensor& tensor)
+{
+    at::Tensor min = torch::min(tensor);
+    at::Tensor max = torch::max(tensor);
     
-    at::Tensor tensor = (logits - min) / (max - min);
+    tensor = (tensor - min) / (max - min);
+}
 
-    int rows = tensor.size(0);
-    int cols = tensor.size(1);
-
-    cv::Mat heatmap(rows, cols, CV_32FC1, tensor.data_ptr<float>());
-    return heatmap.clone();
+void ClipperProcessor::normalize(cv::Mat& mat)
+{
+    cv::normalize(mat, mat, 0, 1, cv::NORM_MINMAX);
 }
 
 ClipperModelInputs ClipperProcessor::process(cv::Mat image, std::vector<std::string> text)
 {
+    size_ = image.size();
+    preprocessed_ = true;
+
     ClipperModelInputs inputs= processText(text);
     inputs.image = processImage(image);
 

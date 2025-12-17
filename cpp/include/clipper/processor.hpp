@@ -57,6 +57,9 @@ class ClipperProcessor : public ProcessorMixins
 
         ClipperModelInputs process(cv::Mat image, std::vector<std::string> text);
         cv::Mat postProcess(at::Tensor& logots);
+        
+        void normalize(at::Tensor& tensor);
+        void normalize(cv::Mat& mat);
 
     private:
         // downres image, normalize convert to tensor
@@ -65,5 +68,8 @@ class ClipperProcessor : public ProcessorMixins
 
         ClipperParameters params_;
         CLIPTokenizer tokenizer_;
+
+        cv::Size size_;
+        bool preprocessed_{false};
 };
 } // namespace Clipper

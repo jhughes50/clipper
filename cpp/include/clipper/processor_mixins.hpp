@@ -21,6 +21,6 @@ class ProcessorMixins
         void resizeImage(cv::Mat& img, const int h, const int w);
 
         at::Tensor cvToTensor(const cv::Mat& mat) const noexcept;
-        cv::Mat tensorToCv(const at::Tensor& tensor) const noexcept;
+        cv::Mat tensorToCv(at::Tensor& tensor) const noexcept;
 };
 } // namespace Clipper
