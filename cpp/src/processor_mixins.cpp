@@ -43,7 +43,19 @@ at::Tensor ProcessorMixins::cvToTensor(const cv::Mat& mat) const noexcept
     return tensor_img;
 }
 
-cv::Mat ProcessorMixins::tensorToCv(const at::Tensor& tensor) const noexcept
+cv::Mat ProcessorMixins::tensorToCv(at::Tensor& tensor) const noexcept
 {
-    // TODO
+    tensor = tensor.to(torch::kCPU).to(torch::kFloat32).contiguous();
+
+    at::Tensor min = torch::min(tensor);
+    at::Tensor max = torch::max(tensor);
+    
+    tensor = (tensor - min) / (max - min);
+
+    int rows = tensor.size(0);
+    int cols = tensor.size(1);
+
+    cv::Mat mat(rows, cols, CV_32FC1, tensor.data_ptr<float>());
+
+    return mat.clone();
 }

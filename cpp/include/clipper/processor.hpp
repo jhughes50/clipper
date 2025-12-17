@@ -65,5 +65,8 @@ class ClipperProcessor : public ProcessorMixins
 
         ClipperParameters params_;
         CLIPTokenizer tokenizer_;
+
+        cv::Size size_;
+        bool preprocessed_{false};
 };
 } // namespace Clipper
