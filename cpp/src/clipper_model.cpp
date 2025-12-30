@@ -11,8 +11,6 @@ using namespace Clipper;
 
 ClipperModelBase::ClipperModelBase(const std::string& model_path, const std::string& proj_path, ClipperModelType type)
 {
-
-
     if (torch::cuda::is_available()) {
         device_ = std::make_unique<c10::Device>(at::kCUDA);
         LOG(INFO) << "Using device Cuda";
@@ -121,8 +119,8 @@ at::Tensor ClipperDecoderModel::operator()(std::vector<at::Tensor>& img_embeddin
 
 ClipperModel::ClipperModel(const std::string& model_dir)
 {
-    google::InitGoogleLogging("Clipper");
-    FLAGS_alsologtostderr = 1;
+    //google::InitGoogleLogging("Clipper");
+    //FLAGS_alsologtostderr = 1;
     
     image_encoder_ = ClipperImageModel(model_dir+"/clip-vision-model-traced.pt", 
                                        model_dir+"/clip-vision-projection-traced.pt",
